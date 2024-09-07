@@ -1,10 +1,10 @@
-#include "nnue.hpp"
-#include <print>
 #include <chrono>
+#include <print>
 
-#include "clipped_relu.hpp"
-#include "sqr_clipped_relu.hpp"
 #include "affine_tranform.hpp"
+#include "clipped_relu.hpp"
+#include "nnue.hpp"
+#include "sqr_clipped_relu.hpp"
 
 int main() {
     nnue::test_clipped_relu_16();

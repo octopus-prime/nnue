@@ -1,21 +1,21 @@
 #pragma once
 
+#include <immintrin.h>
+
+#include <algorithm>
 #include <cstdint>
+#include <ranges>
 #include <span>
 #include <utility>
-
-#include <immintrin.h>
-#include <ranges>
-#include <algorithm>
 
 namespace nnue {
 
 template <std::size_t N>
 class network {
-public:
+   public:
     constexpr static inline std::size_t L1 = N;
 
-private:
+   private:
     constexpr static inline std::size_t L2 = 16;
     constexpr static inline std::size_t L3 = 32;
 
@@ -28,7 +28,7 @@ private:
     alignas(64) std::int8_t weights3[1][L3];
     alignas(64) std::int32_t biases3[1];
 
-public:
+   public:
     network() noexcept;
 
     std::int32_t eval(const std::span<const std::uint8_t, L1> input) const noexcept;
@@ -44,4 +44,4 @@ static inline auto span_cast(const std::span<U, I> span) noexcept {
     return std::span<T, O>{reinterpret_cast<T*>(span.data()), O};
 }
 
-} // namespace nnue
+}  // namespace nnue
