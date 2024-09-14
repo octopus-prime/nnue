@@ -30,13 +30,11 @@ class network {
     std::int32_t eval(const std::span<const std::uint8_t, L1> input) const noexcept;
 };
 
-// using small_network = network<128>;
+using small_network = network<128>;
 using big_network = network<3072>;
 
 template <std::size_t N>
 network<N>::network() noexcept {
-    // constexpr auto get_weight_index_scrambled = [](auto i) { return (i / 4) % (N / 4) * M * 4 + i / N * 4 + i % 4; };
-
     std::ranges::fill(biases1, 10);
 
     // 'identity' matrix
@@ -76,8 +74,7 @@ network<N>::network() noexcept {
 template <std::size_t N>
 std::int32_t network<N>::eval(const std::span<const std::uint8_t, L1> input) const noexcept {
     alignas(64) std::int32_t l2transformed[L2];
-    // alignas(64)
-    std::uint8_t l2clipped[2 * L2] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    alignas(64) std::uint8_t l2clipped[2 * L2];
     alignas(64) std::int32_t l3transformed[L3];
     alignas(64) std::uint8_t l3clipped[L3];
     alignas(64) std::int32_t l4transformed[1];
