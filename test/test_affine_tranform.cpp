@@ -1,8 +1,6 @@
 #include "test_affine_tranform.hpp"
 #include <affine_tranform.hpp>
 
-#include <cassert>
-
 namespace nnue {
 
 void test_affine_tranform_32_1() {
@@ -20,7 +18,6 @@ void test_affine_tranform_32_1() {
         std::printf("%d ", output[i]);
     std::printf("\n");
 
-    // assert(std::ranges::equal(output, expected));
     if (!std::ranges::equal(output, expected))
         throw std::runtime_error{"test_affine_tranform_32_1 failed"};
 }
@@ -75,7 +72,6 @@ void test_affine_tranform_32_32() {
         std::printf("%d ", output[i]);
     std::printf("\n");
 
-    // assert(std::ranges::equal(output, expected));
     if (!std::ranges::equal(output, expected))
         throw std::runtime_error{"test_affine_tranform_32_32 failed"};
 }
@@ -131,7 +127,6 @@ void test_affine_tranform_32_32_2() {
         std::printf("%d ", output[i]);
     std::printf("\n");
 
-    // assert(std::ranges::equal(output, expected));
     if (!std::ranges::equal(output, expected))
         throw std::runtime_error{"test_affine_tranform_32_32_2 failed"};
 }

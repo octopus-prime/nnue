@@ -1,8 +1,6 @@
 #include "test_sqr_clipped_relu.hpp"
 #include <sqr_clipped_relu.hpp>
 
-#include <cassert>
-
 namespace nnue {
 
 void test_sqr_clipped_relu_16() {
@@ -17,7 +15,6 @@ void test_sqr_clipped_relu_16() {
         std::printf("%d ", output[i]);
     std::printf("\n");
 
-    // assert(std::ranges::equal(output, expected));
     if (!std::ranges::equal(output, expected))
         throw std::runtime_error{"test_sqr_clipped_relu_16 failed"};
 }

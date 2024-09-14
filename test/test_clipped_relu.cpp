@@ -1,6 +1,4 @@
 #include "test_clipped_relu.hpp"
-
-#include <cassert>
 #include <clipped_relu.hpp>
 
 namespace nnue {
