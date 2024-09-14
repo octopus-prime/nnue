@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nnue.hpp"
+#include <common.hpp>
 
 namespace nnue {
 
@@ -66,24 +66,23 @@ static auto find_nnz(const std::span<const std::int32_t, I> input, const std::sp
 
 // column major
 template <bool sparse, std::size_t I, std::size_t O>
+    requires(I % 4 == 0 && O % (sizeof(__m256i) / sizeof(std::int32_t)) == 0)
 void affine_tranform(const std::span<const std::uint8_t, I> input, const std::span<const std::int8_t[O], I> weights, const std::span<const std::int32_t, O> biases, const std::span<std::int32_t, O> output) noexcept {
-    using vec_t = __m256i;
-#define vec_set_32 _mm256_set1_epi32
+#define vec_set_32(a) _mm256_set1_epi32(a)
 #define vec_add_dpbusd_32(acc, x, y) _mm256_add_epi32(acc, _mm256_madd_epi16(_mm256_maddubs_epi16(x, y), _mm256_set1_epi16(1)))
 
-    constexpr auto OutputSimdWidth = sizeof(vec_t) / sizeof(int32_t);
-    static_assert(O % OutputSimdWidth == 0);
+    constexpr auto OutputSimdWidth = sizeof(__m256i) / sizeof(std::int32_t);
     constexpr auto NumChunks = I / 4;
     constexpr auto NumRegs = O / OutputSimdWidth;
 
-    const auto input32 = span_cast<const int32_t>(input);
-    const auto biasvec = span_cast<const vec_t>(biases);
-    const auto outptr = span_cast<vec_t>(output);
+    const auto input32 = span_cast<const std::int32_t>(input);
+    const auto biasvec = span_cast<const __m256i>(biases);
+    const auto outptr = span_cast<__m256i>(output);
 
-    vec_t acc[NumRegs];
+    __m256i acc[NumRegs];
     const auto f = [&](auto i) -> void {
         const auto in0 = vec_set_32(input32[i]);
-        const auto col0 = span_cast<const vec_t>(std::span{weights[i * 4]});
+        const auto col0 = span_cast<const __m256i>(std::span{weights[i * 4]});
         for (auto k = 0ul; k < NumRegs; ++k)
             acc[k] = vec_add_dpbusd_32(acc[k], in0, col0[k]);
     };
@@ -116,22 +115,20 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
 template <std::size_t I, std::size_t O>
     requires(I % sizeof(__m256i) == 0)
 void affine_tranform(const std::span<const std::uint8_t, I> input, const std::span<const std::int8_t[I], O> weights, const std::span<const std::int32_t, O> biases, const std::span<std::int32_t, O> output) noexcept {
-    using vec_t = __m256i;
-
-    const auto hadd = [](const vec_t sum) -> std::int32_t {
+    const auto hadd = [](const __m256i sum) -> std::int32_t {
         __m128i sum128 = _mm_add_epi32(_mm256_castsi256_si128(sum), _mm256_extracti128_si256(sum, 1));
         sum128 = _mm_add_epi32(sum128, _mm_shuffle_epi32(sum128, _MM_PERM_BADC));
         sum128 = _mm_add_epi32(sum128, _mm_shuffle_epi32(sum128, _MM_PERM_CDAB));
         return _mm_cvtsi128_si32(sum128);
     };
 
-    constexpr auto NumChunks = I / sizeof(vec_t);
+    constexpr auto NumChunks = I / sizeof(__m256i);
 
-    const auto in = span_cast<const vec_t>(input);
+    const auto in = span_cast<const __m256i>(input);
 
     for (auto i = 0ul; i < O; ++i) {
-        const auto row = span_cast<const vec_t>(std::span{weights[i]});
-        vec_t sum = _mm256_setzero_si256();
+        const auto row = span_cast<const __m256i>(std::span{weights[i]});
+        __m256i sum = _mm256_setzero_si256();
         for (auto j = 0ul; j < NumChunks; ++j)
             sum = _mm256_add_epi32(sum, _mm256_madd_epi16(_mm256_maddubs_epi16(in[j], row[j]), _mm256_set1_epi16(1)));
         output[i] = biases[i] + hadd(sum);
@@ -143,8 +140,5 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
     //     for (auto j = 0ul; j < O; ++j)
     //         output[j] += weights[j][i] * input[i];
 }
-
-void test_affine_tranform_32_1();
-void test_affine_tranform_32_32();
 
 }  // namespace nnue

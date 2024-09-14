@@ -1,18 +1,8 @@
 #include <chrono>
+#include <nnue.hpp>
 #include <print>
 
-#include "affine_tranform.hpp"
-#include "clipped_relu.hpp"
-#include "nnue.hpp"
-#include "sqr_clipped_relu.hpp"
-
 int main() {
-    nnue::test_clipped_relu_16();
-    nnue::test_clipped_relu_32();
-    nnue::test_sqr_clipped_relu_16();
-    nnue::test_affine_tranform_32_1();
-    nnue::test_affine_tranform_32_32();
-
     using network = nnue::big_network;
     constexpr auto N = network::L1;
     constexpr auto Q = 1000000;
