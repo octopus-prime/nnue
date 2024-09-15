@@ -24,7 +24,7 @@ static inline auto get_weight_index_scrambled(std::size_t i) noexcept {
 
 template <std::size_t I, std::size_t O>
 static auto find_nnz(const std::span<const std::int32_t, I> input, const std::span<std::uint16_t, O> out) noexcept {
-    constexpr auto vec_nnz = [](const __m256i x) -> std::int32_t {
+    constexpr auto vec_nnz = [](const __m256i x) -> std::uint32_t {
         return _mm256_movemask_ps(_mm256_castsi256_ps(_mm256_cmpgt_epi32(x, _mm256_setzero_si256())));
     };
 
@@ -35,14 +35,14 @@ static auto find_nnz(const std::span<const std::int32_t, I> input, const std::sp
     constexpr auto OutputsPerChunk = ChunkSize / 8;
 
     const auto inputVector = span_cast<const __m256i>(input);
-    auto count = 0;
-    __m128i base = _mm_setzero_si128();
-    const __m128i increment = _mm_set1_epi16(8);
+    const auto increment = _mm_set1_epi16(8);
+    auto base = _mm_setzero_si128();
+    auto count = 0ul;
     for (auto i = 0ul; i < NumChunks; ++i) {
-        unsigned nnz = 0;
+        std::uint32_t nnz = 0ul;
         for (auto j = 0ul; j < InputsPerChunk; ++j) {
             const __m256i inputChunk = inputVector[i * InputsPerChunk + j];
-            nnz |= unsigned(vec_nnz(inputChunk)) << (j * InputSimdWidth);
+            nnz |= vec_nnz(inputChunk) << (j * InputSimdWidth);
         }
         for (auto j = 0ul; j < OutputsPerChunk; ++j) {
             const auto lookup = (nnz >> (j * 8)) & 0xFF;
@@ -52,7 +52,7 @@ static auto find_nnz(const std::span<const std::int32_t, I> input, const std::sp
             base = _mm_add_epi16(base, increment);
         }
     }
-    return out.subspan(0, count);
+    return out.first(count);
 }
 
 // column major
@@ -117,9 +117,11 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
 
     for (auto i = 0ul; i < O; ++i) {
         const auto row = span_cast<const __m256i>(std::span{weights[i]});
-        __m256i sum = _mm256_setzero_si256();
-        for (auto j = 0ul; j < NumChunks; ++j)
-            sum = _mm256_add_epi32(sum, _mm256_madd_epi16(_mm256_maddubs_epi16(in[j], row[j]), _mm256_set1_epi16(1)));
+
+        const __m256i sum = std::ranges::fold_left(std::views::zip(in, row), _mm256_setzero_si256(), [](const __m256i acc, auto&& zip) -> __m256i {
+            return _mm256_add_epi32(acc, _mm256_madd_epi16(_mm256_maddubs_epi16(std::get<0>(zip), std::get<1>(zip)), _mm256_set1_epi16(1)));
+        });
+
         output[i] = biases[i] + hadd(sum);
     }
 
