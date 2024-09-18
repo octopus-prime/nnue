@@ -1,92 +1,70 @@
 #pragma once
 
-#include <affine_tranform.hpp>
-#include <clipped_relu.hpp>
-#include <sqr_clipped_relu.hpp>
+#include <fstream>
+#include <memory>
+#include <network.hpp>
+#include <string>
 
 namespace nnue {
 
-template <std::size_t N>
-class network {
-   public:
-    constexpr static inline std::size_t L1 = N;
-
-   private:
-    constexpr static inline std::size_t L2 = 16;
-    constexpr static inline std::size_t L3 = 32;
-
-    alignas(64) std::int8_t weights1[L1][L2];
-    alignas(64) std::int32_t biases1[L2];
-
-    alignas(64) std::int8_t weights2[2 * L2][L3];
-    alignas(64) std::int32_t biases2[L3];
-
-    alignas(64) std::int8_t weights3[1][L3];
-    alignas(64) std::int32_t biases3[1];
-
-   public:
-    network() noexcept;
-
-    std::int32_t eval(const std::span<const std::uint8_t, L1> input) const noexcept;
+struct header {
+    std::uint32_t version;
+    std::uint32_t hash;
+    std::string description;
 };
 
-using small_network = network<128>;
-using big_network = network<3072>;
-
 template <std::size_t N>
-network<N>::network() noexcept {
-    std::ranges::fill(biases1, 10);
+class nnue {
+    using Network = network<N>;
 
-    // 'identity' matrix
-    alignas(64) int8_t w1[L2][L1];
-    for (auto i = 0ul; i < L2; ++i)
-        for (auto j = 0ul; j < L1; ++j)
-            w1[i][j] = 100 * (i == j);
-    w1[L2 - 3][L1 - 3] = 1;  // seen in accumation ?!
-    w1[L2 - 2][L1 - 2] = 1;  // seen in accumation ?!
-    w1[L2 - 1][L1 - 1] = 1;  // seen in accumation ?!
+   public:
+    constexpr static inline std::size_t L1 = Network::L1;
 
-    // scramble matrix
-    for (auto i = 0ul; i < L1 * L2; i++)
-        (&weights1[0][0])[get_weight_index_scrambled<L1, L2>(i)] = (&w1[0][0])[i];
+   private:
+    header header_;
+    std::unique_ptr<Network> networks[8];
 
-    std::ranges::fill(biases2, 20);
+   public:
+    nnue();
 
-    // 'identity' matrix
-    alignas(64) int8_t w2[L3][L2 * 2];
-    for (auto i = 0ul; i < L3; ++i)
-        for (auto j = 0ul; j < 2 * L2; ++j)
-            w2[i][j] = 100 * (i == j);
-    // w2[L3-3][L2-3] = 1; // seen in accumation ?!
-    // w2[L3-2][L2-2] = 1; // seen in accumation ?!
-    // w2[L3-1][L2-1] = 1; // seen in accumation ?!
+    nnue(const std::string_view filename) {
+        std::ifstream stream{filename.data(), std::ios::binary};
 
-    // scramble matrix
-    for (auto i = 0ul; i < 2 * L2 * L3; i++)
-        (&weights2[0][0])[get_weight_index_scrambled<2 * L2, L3>(i)] = (&w2[0][0])[i];
+        // read header
+        std::uint32_t size;
+        stream.read(reinterpret_cast<char*>(&header_.version), sizeof(header_.version));
+        stream.read(reinterpret_cast<char*>(&header_.hash), sizeof(header_.hash));
+        stream.read(reinterpret_cast<char*>(&size), sizeof(size));
+        header_.description.resize(size);
+        stream.read(header_.description.data(), size);
 
-    std::ranges::fill(biases3, 30);
+        // read networks
+        std::ranges::generate(networks, [&]() {
+            return std::make_unique<Network>(stream);
+        });
 
-    for (auto i = 0ul; i < L3; ++i)
-        weights3[0][i] = i;
+        if (stream.fail())
+            throw std::runtime_error("failed to read network");
+    }
+
+    const header& header() const noexcept {
+        return header_;
+    }
+
+    const Network& operator[](const std::size_t i) const noexcept {
+        return *networks[i];
+    }
+};
+
+template <>
+nnue<128>::nnue() : nnue{"/home/mike/workspace2/Stockfish/src/nn-37f18f62d772.nnue"} {
 }
 
-template <std::size_t N>
-std::int32_t network<N>::eval(const std::span<const std::uint8_t, L1> input) const noexcept {
-    alignas(64) std::int32_t l2transformed[L2];
-    alignas(64) std::uint8_t l2clipped[2 * L2];
-    alignas(64) std::int32_t l3transformed[L3];
-    alignas(64) std::uint8_t l3clipped[L3];
-    alignas(64) std::int32_t l4transformed[1];
-
-    affine_tranform<true>(std::span{std::as_const(input)}, std::span{weights1}, std::span{biases1}, std::span{l2transformed});
-    sqr_clipped_relu(std::span{std::as_const(l2transformed)}, std::span{l2clipped}.template first<L2>());
-    clipped_relu(std::span{std::as_const(l2transformed)}, std::span{l2clipped}.template last<L2>());
-    affine_tranform<false>(std::span{std::as_const(l2clipped)}, std::span{weights2}, std::span{biases2}, std::span{l3transformed});
-    clipped_relu(std::span{std::as_const(l3transformed)}, std::span{l3clipped});
-    affine_tranform(std::span{std::as_const(l3clipped)}, std::span{weights3}, std::span{biases3}, std::span{l4transformed});
-
-    return l4transformed[0];
+template <>
+nnue<3072>::nnue() : nnue{"/home/mike/workspace2/Stockfish/src/nn-1111cefa1111.nnue"} {
 }
+
+using small_nnue = nnue<128>;
+using big_nnue = nnue<3072>;
 
 }  // namespace nnue

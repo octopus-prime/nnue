@@ -66,7 +66,7 @@ void test_affine_tranform_32_32() {
     alignas(64) std::int32_t output[O] = {};
     alignas(64) const std::int32_t expected[O] = {101, 202, 306, 408, 533, 636, 752, 856, 1005, 1110, 1238, 1792, 1517, 1624, 1764, 1884, 2028, 2136, 2201, 2308, 2406, 2512, 2565, 2670, 2744, 2848, 2889, 2992, 3042, 3144, 3173, 3274};
 
-    affine_tranform<false>(std::span{input}, std::span{std::as_const(weights)}, std::span{bias}, std::span{output});
+    affine_tranform<false>(std::span{input}, std::span{weights} | std::views::as_const, std::span{bias}, std::span{output});
 
     for (auto i = 0ul; i < O; ++i)
         std::printf("%d ", output[i]);
@@ -121,7 +121,7 @@ void test_affine_tranform_32_32_2() {
     alignas(64) std::int32_t output[O] = {};
     alignas(64) const std::int32_t expected[O] = {101, 202, 306, 408, 533, 636, 752, 856, 1005, 1110, 1238, 1792, 1517, 1624, 1764, 1884, 2028, 2136, 2201, 2308, 2406, 2512, 2565, 2670, 2744, 2848, 2889, 2992, 3042, 3144, 3173, 3274};
 
-    affine_tranform<true>(std::span{input}, std::span{std::as_const(weights)}, std::span{bias}, std::span{output});
+    affine_tranform<true>(std::span{input}, std::span{weights} | std::views::as_const, std::span{bias}, std::span{output});
 
     for (auto i = 0ul; i < O; ++i)
         std::printf("%d ", output[i]);

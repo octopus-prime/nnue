@@ -15,7 +15,6 @@ void test_clipped_relu_16() {
         std::printf("%d ", output[i]);
     std::printf("\n");
 
-    // assert(std::ranges::equal(output, expected));
     if (!std::ranges::equal(output, expected))
         throw std::runtime_error{"test_clipped_relu_16 failed"};
 }
@@ -32,7 +31,6 @@ void test_clipped_relu_32() {
         std::printf("%d ", output[i]);
     std::printf("\n");
 
-    // assert(std::ranges::equal(output, expected));
     if (!std::ranges::equal(output, expected))
         throw std::runtime_error{"test_clipped_relu_32 failed"};
 }

@@ -7,7 +7,6 @@
 #include <memory>
 #include <ranges>
 #include <span>
-#include <utility>
 
 namespace nnue {
 
