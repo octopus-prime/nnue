@@ -1,27 +1,31 @@
 #pragma once
 
-#include <fstream>
-#include <memory>
+#include <header.hpp>
+#include <features.hpp>
 #include <network.hpp>
-#include <string>
+#include <mul_clipped_relu.hpp>
 
 namespace nnue {
 
-struct header {
-    std::uint32_t version;
-    std::uint32_t hash;
-    std::string description;
+template <std::size_t N>
+struct accumulator {
+    alignas(64) std::int16_t accumulation[2][N];
+    bool         computed[2];
 };
 
 template <std::size_t N>
 class nnue {
-    using Network = network<N>;
 
    public:
+    using Accumulator = accumulator<N>;
+    using Features = features<N>;
+    using Network = network<N>;
+
     constexpr static inline std::size_t L1 = Network::L1;
 
    private:
-    header header_;
+    std::unique_ptr<header> header_;
+    std::unique_ptr<Features> features;
     std::unique_ptr<Network> networks[8];
 
    public:
@@ -30,29 +34,32 @@ class nnue {
     nnue(const std::string_view filename) {
         std::ifstream stream{filename.data(), std::ios::binary};
 
-        // read header
-        std::uint32_t size;
-        stream.read(reinterpret_cast<char*>(&header_.version), sizeof(header_.version));
-        stream.read(reinterpret_cast<char*>(&header_.hash), sizeof(header_.hash));
-        stream.read(reinterpret_cast<char*>(&size), sizeof(size));
-        header_.description.resize(size);
-        stream.read(header_.description.data(), size);
-
-        // read networks
+        header_ = std::make_unique<header>(stream);
+        features = std::make_unique<Features>(stream);
         std::ranges::generate(networks, [&]() {
             return std::make_unique<Network>(stream);
         });
 
-        if (stream.fail())
+        if (!stream || stream.fail() || stream.peek() != std::ios::traits_type::eof())
             throw std::runtime_error("failed to read network");
     }
 
-    const header& header() const noexcept {
-        return header_;
+    const header& get_header() const noexcept {
+        return *header_;
     }
 
-    const Network& operator[](const std::size_t i) const noexcept {
-        return *networks[i];
+    const Features& get_features() const noexcept {
+        return *features;
+    }
+
+    std::int32_t evaluate(const std::size_t piece_count, const Accumulator& accumulator) const noexcept {
+        const auto bucket = (piece_count - 1) / 4;
+        alignas(64) std::uint8_t l1clipped[L1];
+
+        mul_clipped_relu(std::span{accumulator.accumulation[0]}, std::span{l1clipped}.template first<L1 / 2>());
+        mul_clipped_relu(std::span{accumulator.accumulation[1]}, std::span{l1clipped}.template last<L1 / 2>());
+
+        return networks[bucket]->evaluate(std::span{l1clipped} | std::views::as_const);
     }
 };
 

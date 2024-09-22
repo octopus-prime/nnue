@@ -2,67 +2,51 @@
 #include <nnue.hpp>
 #include <print>
 
-void eval_network() {
-    using network = nnue::big_network;
-    constexpr auto N = network::L1;
-    constexpr auto Q = 1000000;
-    const network net{};
-
-    alignas(64) std::uint8_t input[N];
-    std::ranges::fill(input, 0);
-    for (auto i = 0ul; i < N; ++i)
-        input[i] = (i + 1) % 127;
-    std::int32_t scores[Q];
-
-    const std::int32_t score = net.eval(std::span{input} | std::views::as_const);
-    const auto t0 = std::chrono::high_resolution_clock::now();
-    for (auto i = 0; i < Q; ++i)
-        scores[i] = net.eval(std::span{input} | std::views::as_const);
-    const auto t1 = std::chrono::high_resolution_clock::now();
-    const auto t = (t1 - t0) / Q;
-
-    std::println("elapsed time: {}", t);
-    std::println("score = {}", score);
-    std::println("score = {}", scores[0]);
-    std::println("score = {}", scores[999999]);
-}
-
-void eval_nnue() {
+void evaluate_nnue() {
     using nnue = nnue::small_nnue;
+
+    std::println("nnue={}", sizeof(nnue));
+    std::println("accumulator={}", sizeof(nnue::Accumulator));
+    std::println("features={}", sizeof(nnue::Features));
+    std::println("networks={}=8*{}", sizeof(nnue::Network) * 8, sizeof(nnue::Network));
+
     constexpr auto N = nnue::L1;
-    constexpr auto Q = 2000000;
-    const nnue net{};
+    constexpr auto Q = 1000;
+    const nnue ai{};
 
-    std::println("version = {}", net.header().version);
-    std::println("hash = {}", net.header().hash);
-    std::println("description = {}", net.header().description);
+    std::println("version = {}", ai.get_header().version);
+    std::println("hash = {}", ai.get_header().hash);
+    std::println("description = {}", ai.get_header().description);
 
-    alignas(64) std::uint8_t input[N];
-    std::int32_t scores[Q];
-
-    std::ranges::fill(input, 0);
+    nnue::Accumulator accumulator;
+    std::ranges::fill(accumulator.accumulation[0], 0);
+    std::ranges::fill(accumulator.accumulation[1], 0);
 
     for (auto j = 0ul; j <= 4; ++j) {
         std::println("input = {}%", 100.0 * j / 4);
 
-        for (auto i = 0ul; i < N * j / 4; ++i)
-            input[i] = (i + 1) % 127;
+        std::ranges::fill_n(accumulator.accumulation[0], j * N / 4, 1000);
+        std::ranges::fill_n(accumulator.accumulation[1], j * N / 4, 1000);
 
-        const std::int32_t score = net[0].eval(std::span{input} | std::views::as_const);
+        std::int32_t scores[Q];
+        const std::int32_t score = ai.evaluate(32, accumulator);
         const auto t0 = std::chrono::high_resolution_clock::now();
         for (auto i = 0; i < Q; ++i)
-            scores[i] = net[i % 8].eval(std::span{input} | std::views::as_const);
+            scores[i] = ai.evaluate(i % 30 + 2, accumulator);
         const auto t1 = std::chrono::high_resolution_clock::now();
         const auto t = (t1 - t0) / Q;
 
         std::println("time = {}", t);
         std::println("score = {}", score);
         std::println("score = {}", scores[0]);
-        std::println("score = {}", scores[999999]);
+        std::println("score = {}", scores[Q-1]);
     }
 }
 
 int main() {
-    eval_network();
-    eval_nnue();
+    try {
+        evaluate_nnue();
+    } catch (const std::exception& e) {
+        std::println("error: {}", e.what());
+    }
 }
