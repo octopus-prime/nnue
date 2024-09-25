@@ -8,10 +8,7 @@ namespace nnue {
 
 template <std::size_t N>
 class network {
-   public:
     constexpr static inline std::size_t L1 = N;
-
-   private:
     constexpr static inline std::size_t L2 = 16;
     constexpr static inline std::size_t L3 = 32;
 
@@ -37,7 +34,7 @@ class network {
 
         stream.read(reinterpret_cast<char*>(biases2), sizeof(biases2));
         for (auto i = 0ul; i < 2 * L2 * L3; i++) {
-            auto j = get_weight_index_scrambled<L2, L3>(i);
+            auto j = get_weight_index_scrambled<2 * L2, L3>(i);
             stream.read(reinterpret_cast<char*>(&weights2[0][0] + j), 1);
         }
 

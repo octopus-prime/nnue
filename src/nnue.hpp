@@ -11,6 +11,11 @@ template <std::size_t N>
 struct accumulator {
     alignas(64) std::int16_t accumulation[2][N];
     bool         computed[2];
+
+    
+    auto get_accumulation(auto index) noexcept {
+        return span_cast<__m256i>(std::span{accumulation[index]});
+    }
 };
 
 template <std::size_t N>
@@ -21,7 +26,7 @@ class nnue {
     using Features = features<N>;
     using Network = network<N>;
 
-    constexpr static inline std::size_t L1 = Network::L1;
+    constexpr static inline std::size_t L1 = N;
 
    private:
     std::unique_ptr<header> header_;
@@ -59,7 +64,7 @@ class nnue {
         mul_clipped_relu(std::span{accumulator.accumulation[0]}, std::span{l1clipped}.template first<L1 / 2>());
         mul_clipped_relu(std::span{accumulator.accumulation[1]}, std::span{l1clipped}.template last<L1 / 2>());
 
-        return networks[bucket]->evaluate(std::span{l1clipped} | std::views::as_const);
+        return networks[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
     }
 };
 

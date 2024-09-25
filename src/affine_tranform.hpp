@@ -47,7 +47,8 @@ static auto find_nnz(const std::span<const std::int32_t, I> input, const std::sp
         for (auto j = 0ul; j < OutputsPerChunk; ++j) {
             const auto lookup = (nnz >> (j * 8)) & 0xFF;
             const auto offsets = *reinterpret_cast<const __m128i*>(&lookup_indices[lookup]);
-            *reinterpret_cast<__m128i*>(&out[count]) = _mm_add_epi16(base, offsets);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(&out[count]), _mm_add_epi16(base, offsets));
+            // *reinterpret_cast<__m128i*>(&out[count]) = _mm_add_epi16(base, offsets);
             count += std::popcount(lookup);
             base = _mm_add_epi16(base, increment);
         }
