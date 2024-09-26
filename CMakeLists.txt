@@ -12,8 +12,8 @@ include_directories(src)
 
 # add_link_options(-flto)
 
-file (GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ./src/*.cpp ./src/*.hpp)
-file (GLOB_RECURSE TESTS CONFIGURE_DEPENDS ./test/*.cpp ./test/*.hpp)
+file (GLOB_RECURSE DEMO CONFIGURE_DEPENDS ./demo/*.cpp ./demo/*.hpp)
+file (GLOB_RECURSE TEST CONFIGURE_DEPENDS ./test/*.cpp ./test/*.hpp)
 
-add_executable(nnue ${SOURCES})
-add_executable(nnue_test ${TESTS})
+add_executable(nnue_demo ${DEMO})
+add_executable(nnue_test ${TEST})

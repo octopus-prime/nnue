@@ -1,11 +1,11 @@
 #pragma once
 
-#include <accumulator.hpp>
-#include <features.hpp>
-#include <header.hpp>
-#include <index.hpp>
-#include <mul_clipped_relu.hpp>
-#include <network.hpp>
+#include <nnue/accumulator.hpp>
+#include <nnue/features.hpp>
+#include <nnue/header.hpp>
+#include <nnue/index.hpp>
+#include <nnue/mul_clipped_relu.hpp>
+#include <nnue/network.hpp>
 
 namespace nnue {
 

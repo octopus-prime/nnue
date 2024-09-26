@@ -1,6 +1,6 @@
 #pragma once
 
-#include <common.hpp>
+#include <nnue/common.hpp>
 
 namespace nnue {
 

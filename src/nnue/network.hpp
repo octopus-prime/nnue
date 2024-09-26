@@ -1,8 +1,8 @@
 #pragma once
 
-#include <affine_tranform.hpp>
-#include <clipped_relu.hpp>
-#include <sqr_clipped_relu.hpp>
+#include <nnue/affine_tranform.hpp>
+#include <nnue/clipped_relu.hpp>
+#include <nnue/sqr_clipped_relu.hpp>
 
 namespace nnue {
 

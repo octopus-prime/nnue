@@ -1,7 +1,7 @@
 #pragma once
 
-#include <common.hpp>
-#include <accumulator.hpp>
+#include <nnue/common.hpp>
+#include <nnue/accumulator.hpp>
 
 namespace nnue {
 

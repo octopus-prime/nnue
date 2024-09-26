@@ -1,5 +1,6 @@
+#include <nnue/nnue.hpp>
+
 #include <chrono>
-#include <nnue.hpp>
 #include <print>
 
 void evaluate_nnue() {
