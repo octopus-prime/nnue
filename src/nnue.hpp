@@ -1,39 +1,28 @@
 #pragma once
 
-#include <header.hpp>
+#include <accumulator.hpp>
 #include <features.hpp>
-#include <network.hpp>
+#include <header.hpp>
+#include <index.hpp>
 #include <mul_clipped_relu.hpp>
+#include <network.hpp>
 
 namespace nnue {
 
 template <std::size_t N>
-struct accumulator {
-    alignas(64) std::int16_t accumulation[2][N];
-    bool         computed[2];
-
-    
-    auto get_accumulation(auto index) noexcept {
-        return span_cast<__m256i>(std::span{accumulation[index]});
-    }
-};
-
-template <std::size_t N>
 class nnue {
-
-   public:
-    using Accumulator = accumulator<N>;
     using Features = features<N>;
     using Network = network<N>;
 
-    constexpr static inline std::size_t L1 = N;
-
-   private:
     std::unique_ptr<header> header_;
     std::unique_ptr<Features> features;
     std::unique_ptr<Network> networks[8];
 
    public:
+    using Accumulator = accumulator<N>;
+
+    constexpr static inline std::size_t L1 = N;
+
     nnue();
 
     nnue(const std::string_view filename) {
@@ -49,20 +38,35 @@ class nnue {
             throw std::runtime_error("failed to read network");
     }
 
-    const header& get_header() const noexcept {
-        return *header_;
+    std::uint32_t version() const noexcept {
+        return header_->version;
     }
 
-    const Features& get_features() const noexcept {
-        return *features;
+    std::uint32_t hash() const noexcept {
+        return header_->hash;
     }
 
-    std::int32_t evaluate(const std::size_t piece_count, const Accumulator& accumulator) const noexcept {
+    std::string_view description() const noexcept {
+        return header_->description;
+    }
+
+    template <int Perspective>
+    void refresh(Accumulator& new_accumulator, const std::span<const std::uint16_t> active_features) const noexcept {
+        features->refresh(std::span{new_accumulator.accumulation[Perspective]}, active_features);
+    }
+
+    template <int Perspective>
+    void update(Accumulator& new_accumulator, const Accumulator& prev_accumulator, const std::span<const std::uint16_t> removed_features, const std::span<const std::uint16_t> added_features) const noexcept {
+        features->update(std::span{new_accumulator.accumulation[Perspective]}, std::span{prev_accumulator.accumulation[Perspective]}, removed_features, added_features);
+    }
+
+    template <int Perspective>
+    std::int32_t evaluate(const Accumulator& accumulator, const std::size_t piece_count) const noexcept {
         const auto bucket = (piece_count - 1) / 4;
         alignas(64) std::uint8_t l1clipped[L1];
 
-        mul_clipped_relu(std::span{accumulator.accumulation[0]}, std::span{l1clipped}.template first<L1 / 2>());
-        mul_clipped_relu(std::span{accumulator.accumulation[1]}, std::span{l1clipped}.template last<L1 / 2>());
+        mul_clipped_relu(std::span{accumulator.accumulation[Perspective]}, std::span{l1clipped}.template first<L1 / 2>());
+        mul_clipped_relu(std::span{accumulator.accumulation[1 - Perspective]}, std::span{l1clipped}.template last<L1 / 2>());
 
         return networks[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
     }
