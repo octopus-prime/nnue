@@ -1,7 +1,5 @@
-#include <nnue/nnue.hpp>
-
 #include <chrono>
-#include <print>
+#include <nnue/nnue.hpp>
 
 void evaluate_nnue() {
     using namespace nnue;
@@ -9,18 +7,16 @@ void evaluate_nnue() {
 
     const nnue ai;
 
-    std::println("version = {}", ai.version());
-    std::println("hash = {}", ai.hash());
-    std::println("description = {}", ai.description());
+    std::printf("version = %d\n", ai.version());
+    std::printf("hash = %d\n", ai.hash());
+    std::printf("description = %s\n", ai.description().data());
 
     std::uint16_t white_features[32] = {
         make_index<WHITE>(SQ_A1, SQ_C2, W_PAWN),
-        make_index<WHITE>(SQ_A1, SQ_D4, B_ROOK)
-    };
+        make_index<WHITE>(SQ_A1, SQ_D4, B_ROOK)};
     std::uint16_t black_features[32] = {
         make_index<BLACK>(SQ_B8, SQ_C2, W_PAWN),
-        make_index<BLACK>(SQ_B8, SQ_D4, B_ROOK)
-    };
+        make_index<BLACK>(SQ_B8, SQ_D4, B_ROOK)};
 
     nnue::Accumulator accumulator;
     ai.refresh<WHITE>(accumulator, std::span{white_features}.first(2));
@@ -39,16 +35,16 @@ void evaluate_nnue() {
     const auto t1 = std::chrono::high_resolution_clock::now();
     const auto t = (t1 - t0) / Q;
 
-    std::println("time = {}", t);
-    std::println("score = {}", score);
-    std::println("score = {}", scores[0]);
-    std::println("score = {}", scores[Q-1]);
+    std::printf("time = %ldns\n", t.count());
+    std::printf("score = %d\n", score);
+    std::printf("score = %d\n", scores[0]);
+    std::printf("score = %d\n", scores[Q - 1]);
 }
 
 int main() {
     try {
         evaluate_nnue();
     } catch (const std::exception& e) {
-        std::println("error: {}", e.what());
+        std::printf("error: %s\n", e.what());
     }
 }
