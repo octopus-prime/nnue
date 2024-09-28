@@ -29,7 +29,7 @@ void evaluate_nnue() {
     const std::int32_t score = ai.evaluate<WHITE>(accumulator, 4);
 
     constexpr auto Q = 1000000;
-    std::int32_t scores[Q];
+    std::vector<std::int32_t> scores(Q);
     const auto t0 = std::chrono::high_resolution_clock::now();
     for (auto i = 0; i < Q; ++i) {
         ai.refresh<WHITE>(accumulator, std::span{white_features}.first(2));

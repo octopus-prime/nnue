@@ -12,14 +12,16 @@ namespace nnue {
 template<typename T, std::size_t N>
     requires std::is_signed_v<T>
 void read_leb_128(std::istream& stream, const std::span<T, N> buffer) {
-    constexpr std::string_view COMPRESSED_LEB128 {"COMPRESSED_LEB128"};
+    using namespace std::literals;
+
+    constexpr std::string_view COMPRESSED_LEB128 = "COMPRESSED_LEB128"sv;
 
     // Check the presence of our LEB128 magic string
     char leb128MagicString[COMPRESSED_LEB128.size()];
     stream.read(leb128MagicString, COMPRESSED_LEB128.size());
 
-    if (COMPRESSED_LEB128.compare(leb128MagicString) != 0)
-        throw std::runtime_error(std::string{"no 'COMPRESSED_LEB128' was '"} + leb128MagicString + "'");
+    if (COMPRESSED_LEB128 != std::string_view{leb128MagicString, COMPRESSED_LEB128.size()})
+        throw std::runtime_error("COMPRESSED_LEB128 not matched");
 
     const std::uint32_t BUF_SIZE = 4096;
     std::uint8_t        buf[BUF_SIZE];

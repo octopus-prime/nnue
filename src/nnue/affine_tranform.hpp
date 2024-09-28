@@ -112,8 +112,6 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
         return _mm_cvtsi128_si32(sum128);
     };
 
-    constexpr auto NumChunks = I / sizeof(__m256i);
-
     const auto in = span_cast<const __m256i>(input);
 
     for (auto i = 0ul; i < O; ++i) {

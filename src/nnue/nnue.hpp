@@ -15,8 +15,8 @@ class nnue {
     using Network = network<N>;
 
     std::unique_ptr<header> header_;
-    std::unique_ptr<Features> features;
-    std::unique_ptr<Network> networks[8];
+    std::unique_ptr<Features> features_;
+    std::unique_ptr<Network> networks_[8];
 
    public:
     using Accumulator = accumulator<N>;
@@ -29,8 +29,8 @@ class nnue {
         std::ifstream stream{filename.data(), std::ios::binary};
 
         header_ = std::make_unique<header>(stream);
-        features = std::make_unique<Features>(stream);
-        std::ranges::generate(networks, [&]() {
+        features_ = std::make_unique<Features>(stream);
+        std::ranges::generate(networks_, [&]() {
             return std::make_unique<Network>(stream);
         });
 
@@ -52,12 +52,12 @@ class nnue {
 
     template <int Perspective>
     void refresh(Accumulator& new_accumulator, const std::span<const std::uint16_t> active_features) const noexcept {
-        features->refresh(std::span{new_accumulator.accumulation[Perspective]}, active_features);
+        features_->refresh(std::span{new_accumulator.accumulation[Perspective]}, active_features);
     }
 
     template <int Perspective>
     void update(Accumulator& new_accumulator, const Accumulator& prev_accumulator, const std::span<const std::uint16_t> removed_features, const std::span<const std::uint16_t> added_features) const noexcept {
-        features->update(std::span{new_accumulator.accumulation[Perspective]}, std::span{prev_accumulator.accumulation[Perspective]}, removed_features, added_features);
+        features_->update(std::span{new_accumulator.accumulation[Perspective]}, std::span{prev_accumulator.accumulation[Perspective]}, removed_features, added_features);
     }
 
     template <int Perspective>
@@ -68,7 +68,7 @@ class nnue {
         mul_clipped_relu(std::span{accumulator.accumulation[Perspective]}, std::span{l1clipped}.template first<L1 / 2>());
         mul_clipped_relu(std::span{accumulator.accumulation[1 - Perspective]}, std::span{l1clipped}.template last<L1 / 2>());
 
-        return networks[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
+        return networks_[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
     }
 };
 
