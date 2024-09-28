@@ -119,10 +119,10 @@ public:
     void update(const std::span<std::int16_t, N> new_accumulation, const std::span<const std::int16_t, N> prev_accumulation, const std::span<const std::uint16_t> removed_features, const std::span<const std::uint16_t> added_features) const noexcept {
         constexpr auto chunk = 16; // num simd regs
         const auto accumulation = span_cast<__m256i>(new_accumulation);
-        const auto prev = span_cast<const __m256i>(std::span{prev_accumulation});
+        const auto previous = span_cast<const __m256i>(prev_accumulation);
         for (auto index = 0ul; index < accumulation.size(); index += chunk) {
             __m256i regs[chunk];
-            std::ranges::copy(prev.subspan(index, chunk), regs);
+            std::ranges::copy(previous.subspan(index, chunk), regs);
             for (auto&& feature : removed_features) {
                 const auto column = span_cast<const __m256i>(std::span{weights0[feature]});
                 for (auto&& [col, acc] : std::views::zip(column.subspan(index, chunk), regs))
