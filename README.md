@@ -1,5 +1,5 @@
 ## nnue
-- c++
+- c++23
 - simd
 
 #### Architecture
@@ -8,4 +8,4 @@
 
 #### Compilers
 - clang 18
-- gcc 14
+- gcc 13
