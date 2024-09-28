@@ -104,14 +104,12 @@ public:
         constexpr auto chunk = 16; // num simd regs
         const auto accumulation = span_cast<__m256i>(new_accumulation);
         const auto biases = span_cast<const __m256i>(std::span{biases0});
+        const auto weights = [this](const auto feature){ return span_cast<const __m256i>(std::span{weights0[feature]}); };
         for (auto index = 0ul; index < accumulation.size(); index += chunk) {
             __m256i regs[chunk];
             std::ranges::copy(biases.subspan(index, chunk), regs);
-            for (auto&& feature : active_features) {
-                const auto column = span_cast<const __m256i>(std::span{weights0[feature]});
-                for (auto&& [col, acc] : std::views::zip(column.subspan(index, chunk), regs))
-                    acc += col;
-            }
+            for (auto feature : active_features)
+                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, std::plus{});
             std::ranges::copy(regs, accumulation.subspan(index, chunk).begin());
         }
     }
@@ -120,19 +118,14 @@ public:
         constexpr auto chunk = 16; // num simd regs
         const auto accumulation = span_cast<__m256i>(new_accumulation);
         const auto previous = span_cast<const __m256i>(prev_accumulation);
+        const auto weights = [this](const auto feature){ return span_cast<const __m256i>(std::span{weights0[feature]}); };
         for (auto index = 0ul; index < accumulation.size(); index += chunk) {
             __m256i regs[chunk];
             std::ranges::copy(previous.subspan(index, chunk), regs);
-            for (auto&& feature : removed_features) {
-                const auto column = span_cast<const __m256i>(std::span{weights0[feature]});
-                for (auto&& [col, acc] : std::views::zip(column.subspan(index, chunk), regs))
-                    acc -= col;
-            }
-            for (auto&& feature : added_features) {
-                const auto column = span_cast<const __m256i>(std::span{weights0[feature]});
-                for (auto&& [col, acc] : std::views::zip(column.subspan(index, chunk), regs))
-                    acc += col;
-            }
+            for (auto feature : removed_features)
+                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, std::minus{});
+            for (auto feature : added_features)
+                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, std::plus{});
             std::ranges::copy(regs, accumulation.subspan(index, chunk).begin());
         }
     }
