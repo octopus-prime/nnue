@@ -68,6 +68,11 @@ class nnue {
         mul_clipped_relu(std::span{accumulator.accumulation[Perspective]}, std::span{l1clipped}.template first<L1 / 2>());
         mul_clipped_relu(std::span{accumulator.accumulation[1 - Perspective]}, std::span{l1clipped}.template last<L1 / 2>());
 
+        // std::printf("l1clipped:\n");
+        // for (auto x : l1clipped)
+        //     std::printf("%d ", x);
+        // std::printf("\n");
+
         return networks_[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
     }
 };

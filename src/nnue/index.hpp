@@ -54,12 +54,12 @@ enum : int {
     PS_NB       = 11 * SQUARE_NB
 };
 
-static inline constexpr int PieceSquareIndex[2][16] = {
+constexpr int PieceSquareIndex[2][16] = {
     {PS_NONE, PS_W_PAWN, PS_W_KNIGHT, PS_W_BISHOP, PS_W_ROOK, PS_W_QUEEN, PS_KING, PS_NONE, PS_NONE, PS_B_PAWN, PS_B_KNIGHT, PS_B_BISHOP, PS_B_ROOK, PS_B_QUEEN, PS_KING, PS_NONE},
     {PS_NONE, PS_B_PAWN, PS_B_KNIGHT, PS_B_BISHOP, PS_B_ROOK, PS_B_QUEEN, PS_KING, PS_NONE, PS_NONE, PS_W_PAWN, PS_W_KNIGHT, PS_W_BISHOP, PS_W_ROOK, PS_W_QUEEN, PS_KING, PS_NONE}
 };
 
-static inline constexpr int OrientTBL[2][SQUARE_NB] = {
+constexpr int OrientTBL[2][SQUARE_NB] = {
     { SQ_H1, SQ_H1, SQ_H1, SQ_H1, SQ_A1, SQ_A1, SQ_A1, SQ_A1,
     SQ_H1, SQ_H1, SQ_H1, SQ_H1, SQ_A1, SQ_A1, SQ_A1, SQ_A1,
     SQ_H1, SQ_H1, SQ_H1, SQ_H1, SQ_A1, SQ_A1, SQ_A1, SQ_A1,
@@ -79,7 +79,7 @@ static inline constexpr int OrientTBL[2][SQUARE_NB] = {
 };
 
 #define B(v) (v * PS_NB)
-static inline constexpr int KingBuckets[2][SQUARE_NB] = {
+constexpr int KingBuckets[2][SQUARE_NB] = {
     { B(28), B(29), B(30), B(31), B(31), B(30), B(29), B(28),
     B(24), B(25), B(26), B(27), B(27), B(26), B(25), B(24),
     B(20), B(21), B(22), B(23), B(23), B(22), B(21), B(20),

@@ -52,11 +52,16 @@ class network {
         affine_tranform<true>(std::span{l1clipped}, std::span{weights1}, std::span{biases1}, std::span{l2transformed});
         sqr_clipped_relu(std::span{l2transformed} | std::views::as_const, std::span{l2clipped}.template first<L2>());
         clipped_relu(std::span{l2transformed} | std::views::as_const, std::span{l2clipped}.template last<L2>());
+        // ugly shit
+        std::ranges::copy(std::span{l2clipped}.template subspan<L2, L2 - 1>(), l2clipped + L2 - 1);
+        l2clipped[2 * L2 - 2] = 0;
+        l2clipped[2 * L2 - 1] = 0;
+        //
         affine_tranform<false>(std::span{l2clipped} | std::views::as_const, std::span{weights2}, std::span{biases2}, std::span{l3transformed});
         clipped_relu(std::span{l3transformed} | std::views::as_const, std::span{l3clipped});
         affine_tranform(std::span{l3clipped} | std::views::as_const, std::span{weights3}, std::span{biases3}, std::span{l4transformed});
 
-        return l4transformed[0];
+        return l4transformed[0] + l2transformed[L2 - 1] * (600 * 16) / (127 * (1 << 6));
     }
 };
 

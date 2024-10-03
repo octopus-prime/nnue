@@ -101,7 +101,8 @@ public:
     }
 
     void refresh(const std::span<std::int16_t, N> new_accumulation, const std::span<const std::uint16_t> active_features) const noexcept {
-        constexpr auto chunk = 16; // num simd regs
+        constexpr auto chunk = std::min(16ul, N * sizeof(std::int16_t) / sizeof(__m256i)); // 16 num simd regs (N=3072) - or - 8 just all data (N=128)
+        static_assert(N % (chunk * sizeof(__m256i) / sizeof(std::int16_t)) == 0);
         const auto accumulation = span_cast<__m256i>(new_accumulation);
         const auto biases = span_cast<const __m256i>(std::span{biases0});
         const auto weights = [this](const auto feature){ return span_cast<const __m256i>(std::span{weights0[feature]}); };
@@ -109,13 +110,14 @@ public:
             __m256i regs[chunk];
             std::ranges::copy(biases.subspan(index, chunk), regs);
             for (auto feature : active_features)
-                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, std::plus{});
+                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, _mm256_add_epi16);
             std::ranges::copy(regs, accumulation.subspan(index, chunk).begin());
         }
     }
 
     void update(const std::span<std::int16_t, N> new_accumulation, const std::span<const std::int16_t, N> prev_accumulation, const std::span<const std::uint16_t> removed_features, const std::span<const std::uint16_t> added_features) const noexcept {
-        constexpr auto chunk = 16; // num simd regs
+        constexpr auto chunk = std::min(16ul, N * sizeof(std::int16_t) / sizeof(__m256i)); // 16 num simd regs (N=3072) - or - 8 just all data (N=128)
+        static_assert(N % (chunk * sizeof(__m256i) / sizeof(std::int16_t)) == 0);
         const auto accumulation = span_cast<__m256i>(new_accumulation);
         const auto previous = span_cast<const __m256i>(prev_accumulation);
         const auto weights = [this](const auto feature){ return span_cast<const __m256i>(std::span{weights0[feature]}); };
@@ -123,9 +125,9 @@ public:
             __m256i regs[chunk];
             std::ranges::copy(previous.subspan(index, chunk), regs);
             for (auto feature : removed_features)
-                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, std::minus{});
+                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, _mm256_sub_epi16);
             for (auto feature : added_features)
-                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, std::plus{});
+                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, _mm256_add_epi16);
             std::ranges::copy(regs, accumulation.subspan(index, chunk).begin());
         }
     }

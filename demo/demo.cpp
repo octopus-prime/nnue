@@ -12,16 +12,22 @@ void evaluate_nnue() {
     std::printf("description = %s\n", ai.description().data());
 
     const auto evaluate = [&ai](){
-        std::uint16_t white_features[32] = {
-            make_index<WHITE>(SQ_A1, SQ_C2, W_PAWN),
-            make_index<WHITE>(SQ_A1, SQ_D4, B_ROOK)};
-        std::uint16_t black_features[32] = {
-            make_index<BLACK>(SQ_B8, SQ_C2, W_PAWN),
-            make_index<BLACK>(SQ_B8, SQ_D4, B_ROOK)};
+        constexpr std::uint16_t white_features[32] = {
+            make_index<WHITE>(SQ_A1, SQ_A1, W_KING),
+            make_index<WHITE>(SQ_A1, SQ_C3, W_PAWN),
+            make_index<WHITE>(SQ_A1, SQ_B8, B_KING),
+            make_index<WHITE>(SQ_A1, SQ_D4, B_ROOK)
+        };
+        constexpr std::uint16_t black_features[32] = {
+            make_index<BLACK>(SQ_B8, SQ_B8, B_KING),
+            make_index<BLACK>(SQ_B8, SQ_D4, B_ROOK),
+            make_index<BLACK>(SQ_B8, SQ_A1, W_KING),
+            make_index<BLACK>(SQ_B8, SQ_C3, W_PAWN)
+        };
 
         nnue::Accumulator accumulator;
-        ai.refresh<WHITE>(accumulator, std::span{white_features}.first(2));
-        ai.refresh<BLACK>(accumulator, std::span{black_features}.first(2));
+        ai.refresh<WHITE>(accumulator, std::span{white_features}.first(4));
+        ai.refresh<BLACK>(accumulator, std::span{black_features}.first(4));
 
         return ai.evaluate<WHITE>(accumulator, 4);
     };
@@ -36,9 +42,9 @@ void evaluate_nnue() {
     const auto t = (t1 - t0) / N;
 
     std::printf("time = %ldns\n", t.count());
-    std::printf("score = %d\n", score);
-    std::printf("score = %d\n", scores[0]);
-    std::printf("score = %d\n", scores[N - 1]);
+    std::printf("score = %d (%f pawns)\n", score, score / 208.f);
+    std::printf("score = %d (%f pawns)\n", scores[0], scores[0] / 208.f);
+    std::printf("score = %d (%f pawns)\n", scores[N - 1], scores[N - 1] / 208.f);
 }
 
 int main() {

@@ -4,7 +4,7 @@
 
 namespace nnue {
 
-alignas(64) static inline const std::array<std::array<std::uint16_t, 8>, 256> lookup_indices = []() {
+alignas(64) constexpr std::array<std::array<std::uint16_t, 8>, 256> lookup_indices = []() {
     std::array<std::array<std::uint16_t, 8>, 256> v{};
     for (unsigned i = 0; i < 256; ++i) {
         std::uint64_t j = i, k = 0;
@@ -18,12 +18,12 @@ alignas(64) static inline const std::array<std::array<std::uint16_t, 8>, 256> lo
 }();
 
 template <std::size_t I, std::size_t O>
-static inline auto get_weight_index_scrambled(std::size_t i) noexcept {
+auto get_weight_index_scrambled(std::size_t i) noexcept {
     return (i / 4) % (I / 4) * O * 4 + i / I * 4 + i % 4;
 }
 
 template <std::size_t I, std::size_t O>
-static auto find_nnz(const std::span<const std::int32_t, I> input, const std::span<std::uint16_t, O> out) noexcept {
+auto find_nnz(const std::span<const std::int32_t, I> input, const std::span<std::uint16_t, O> out) noexcept {
     constexpr auto vec_nnz = [](const __m256i x) -> std::uint32_t {
         return _mm256_movemask_ps(_mm256_castsi256_ps(_mm256_cmpgt_epi32(x, _mm256_setzero_si256())));
     };
@@ -73,7 +73,7 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
     const auto outptr = span_cast<__m256i>(output);
 
     __m256i acc[NumRegs];
-    const auto f = [&](auto i) -> void {
+    const auto f = [&](const std::uint16_t i) -> void {
         const auto in0 = _mm256_set1_epi32(input32[i]);
         const auto col0 = span_cast<const __m256i>(std::span{weights[i * 4]});
         for (auto k = 0ul; k < NumRegs; ++k)
@@ -88,7 +88,7 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
         std::ranges::copy(acc, outptr.begin());
     } else {
         std::ranges::copy(biasvec, acc);
-        std::ranges::for_each(std::views::iota(0ul, NumChunks), f);
+        std::ranges::for_each(std::views::iota(0ul, input32.size()), f);
         std::ranges::copy(acc, outptr.begin());
     }
 
