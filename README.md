@@ -8,4 +8,3 @@
 
 #### Compilers
 - clang 18
-- gcc 13
