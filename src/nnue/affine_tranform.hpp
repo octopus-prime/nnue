@@ -88,7 +88,7 @@ void affine_tranform(const std::span<const std::uint8_t, I> input, const std::sp
         std::ranges::copy(acc, outptr.begin());
     } else {
         std::ranges::copy(biasvec, acc);
-        std::ranges::for_each(std::views::iota(0ul, input32.size()), f);
+        std::ranges::for_each(std::views::iota(0ul, NumChunks), f);
         std::ranges::copy(acc, outptr.begin());
     }
 
