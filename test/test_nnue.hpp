@@ -5,7 +5,6 @@
 namespace nnue {
 
 void test_nnue() {
-    using namespace nnue;
     using nnue = big_nnue;
 
     const nnue ai;
