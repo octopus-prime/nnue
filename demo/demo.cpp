@@ -1,38 +1,57 @@
 #include <chrono>
 #include <nnue/nnue.hpp>
 
-void evaluate_nnue() {
-    using namespace nnue;
+using namespace nnue;
+
+class slow_evaluator {
     using nnue = big_nnue;
 
-    const nnue ai;
+    nnue nnue_;
 
-    std::printf("version = %d\n", ai.version());
-    std::printf("hash = %d\n", ai.hash());
-    std::printf("description = %s\n", ai.description().data());
+public:
+    template <int Perspective>
+    std::int32_t evaluate(const std::span<const int, 64> board) const noexcept {
+        const auto white_king = std::distance(board.begin(), std::ranges::find(board, W_KING));
+        const auto black_king = std::distance(board.begin(), std::ranges::find(board, B_KING));
 
-    const auto evaluate = [&ai](){
-        constexpr std::uint16_t white_features[32] = {
-            make_index<WHITE>(SQ_A1, SQ_A1, W_KING),
-            make_index<WHITE>(SQ_A1, SQ_C3, W_PAWN),
-            make_index<WHITE>(SQ_A1, SQ_B8, B_KING),
-            make_index<WHITE>(SQ_A1, SQ_D4, B_ROOK)
-        };
-        constexpr std::uint16_t black_features[32] = {
-            make_index<BLACK>(SQ_B8, SQ_B8, B_KING),
-            make_index<BLACK>(SQ_B8, SQ_D4, B_ROOK),
-            make_index<BLACK>(SQ_B8, SQ_A1, W_KING),
-            make_index<BLACK>(SQ_B8, SQ_C3, W_PAWN)
-        };
+        std::uint16_t white_features[32];
+        std::uint16_t black_features[32];
+        std::size_t count = 0;
+        for (auto [square, piece] : std::views::enumerate(board))
+            if (piece != NO_PIECE) {
+                white_features[count] = make_index<WHITE>(white_king, square, piece);
+                black_features[count] = make_index<BLACK>(black_king, square, piece);
+                ++count;
+            }
 
         nnue::Accumulator accumulator;
-        ai.refresh<WHITE>(accumulator, std::span{white_features}.first(4));
-        ai.refresh<BLACK>(accumulator, std::span{black_features}.first(4));
+        nnue_.refresh<WHITE>(accumulator, std::span{white_features}.first(count));
+        nnue_.refresh<BLACK>(accumulator, std::span{black_features}.first(count));
 
-        return ai.evaluate<WHITE>(accumulator, 4);
+        return nnue_.evaluate<Perspective>(accumulator, count);
+    }
+};
+
+void evaluate_nnue() {
+    const slow_evaluator evaluator;
+
+    const int board[64] = {
+        W_ROOK,   W_KNIGHT, W_BISHOP, W_QUEEN,  W_KING,   W_BISHOP, W_KNIGHT, W_ROOK,
+        W_PAWN,   W_PAWN,   W_PAWN,   W_PAWN,   W_PAWN,   W_PAWN,   W_PAWN,   W_PAWN,
+        NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE,
+        NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE,
+        NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE,
+        NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE, NO_PIECE,
+        B_PAWN,   B_PAWN,   B_PAWN,   B_PAWN,   B_PAWN,   B_PAWN,   B_PAWN,   B_PAWN,
+        B_ROOK,   B_KNIGHT, B_BISHOP, B_QUEEN,  B_KING,   B_BISHOP, B_KNIGHT, B_ROOK
+    };
+
+    const auto evaluate = [&](){
+        return evaluator.evaluate<WHITE>(std::span{board}); 
     };
 
     const std::int32_t score = evaluate();
+    std::printf("score = %d (%f pawns)\n", score, score / 208.f);
 
     constexpr auto N = 1000000;
     std::vector<std::int32_t> scores(N);
@@ -40,11 +59,9 @@ void evaluate_nnue() {
     std::ranges::generate(scores, evaluate);
     const auto t1 = std::chrono::high_resolution_clock::now();
     const auto t = (t1 - t0) / N;
-
-    std::printf("time = %ldns\n", t.count());
-    std::printf("score = %d (%f pawns)\n", score, score / 208.f);
     std::printf("score = %d (%f pawns)\n", scores[0], scores[0] / 208.f);
     std::printf("score = %d (%f pawns)\n", scores[N - 1], scores[N - 1] / 208.f);
+    std::printf("time = %ldns\n", t.count());
 }
 
 int main() {
