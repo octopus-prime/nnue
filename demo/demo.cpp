@@ -16,19 +16,19 @@ public:
 
         std::uint16_t white_features[32];
         std::uint16_t black_features[32];
-        std::size_t count = 0;
+        std::size_t piece_count = 0;
         for (auto [square, piece] : std::views::enumerate(board))
             if (piece != NO_PIECE) {
-                white_features[count] = make_index<WHITE>(white_king, square, piece);
-                black_features[count] = make_index<BLACK>(black_king, square, piece);
-                ++count;
+                white_features[piece_count] = make_index<WHITE>(white_king, square, piece);
+                black_features[piece_count] = make_index<BLACK>(black_king, square, piece);
+                ++piece_count;
             }
 
         NNUE::Accumulator accumulator;
-        nnue.refresh<WHITE>(accumulator, std::span{white_features}.first(count));
-        nnue.refresh<BLACK>(accumulator, std::span{black_features}.first(count));
+        nnue.refresh<WHITE>(accumulator, std::span{white_features}.first(piece_count));
+        nnue.refresh<BLACK>(accumulator, std::span{black_features}.first(piece_count));
 
-        return nnue.evaluate<Perspective>(accumulator, count);
+        return nnue.evaluate<Perspective>(accumulator, piece_count);
     }
 };
 
