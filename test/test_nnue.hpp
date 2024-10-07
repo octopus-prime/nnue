@@ -5,13 +5,13 @@
 namespace nnue {
 
 void test_nnue() {
-    using nnue = big_nnue;
+    using NNUE = big_nnue;
 
-    const nnue nnue_;
+    const NNUE nnue;
 
-    const auto version = nnue_.version();
-    const auto hash = nnue_.hash();
-    const auto description = nnue_.description();
+    const auto version = nnue.version();
+    const auto hash = nnue.hash();
+    const auto description = nnue.description();
 
     std::printf("%d\n", version);
     std::printf("%d\n", hash);
@@ -39,12 +39,12 @@ void test_nnue() {
         make_index<BLACK>(SQ_B8, SQ_C3, W_PAWN)
     };
 
-    nnue::Accumulator accumulator;
-    nnue_.refresh<WHITE>(accumulator, std::span{white_features}.first(4));
-    nnue_.refresh<BLACK>(accumulator, std::span{black_features}.first(4));
+    NNUE::Accumulator accumulator;
+    nnue.refresh<WHITE>(accumulator, std::span{white_features}.first(4));
+    nnue.refresh<BLACK>(accumulator, std::span{black_features}.first(4));
 
-    const std::int32_t white_score = nnue_.evaluate<WHITE>(accumulator, 4);
-    const std::int32_t black_score = nnue_.evaluate<BLACK>(accumulator, 4);
+    const std::int32_t white_score = nnue.evaluate<WHITE>(accumulator, 4);
+    const std::int32_t black_score = nnue.evaluate<BLACK>(accumulator, 4);
 
     std::printf("%d\n", white_score);
     std::printf("%d\n", black_score);

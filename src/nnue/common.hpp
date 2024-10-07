@@ -12,6 +12,11 @@
 
 namespace nnue {
 
+using namespace std::literals;
+
+constexpr std::string_view big_nnue_filename = "/home/mike/workspace2/Stockfish/src/nn-1111cefa1111.nnue"sv;
+constexpr std::string_view small_nnue_filename = "/home/mike/workspace2/Stockfish/src/nn-37f18f62d772.nnue"sv;
+
 template <typename T, typename U, std::size_t I>
     requires(sizeof(T) % sizeof(U) == 0)
 auto span_cast(const std::span<U, I> span) noexcept {

@@ -12,8 +12,6 @@ namespace nnue {
 template<typename T, std::size_t N>
     requires std::is_signed_v<T>
 void read_leb_128(std::istream& stream, const std::span<T, N> buffer) {
-    using namespace std::literals;
-
     constexpr std::string_view COMPRESSED_LEB128 = "COMPRESSED_LEB128"sv;
 
     // Check the presence of our LEB128 magic string
@@ -23,32 +21,26 @@ void read_leb_128(std::istream& stream, const std::span<T, N> buffer) {
     if (COMPRESSED_LEB128 != std::string_view{leb128MagicString, COMPRESSED_LEB128.size()})
         throw std::runtime_error("COMPRESSED_LEB128 not matched");
 
-    const std::uint32_t BUF_SIZE = 4096;
-    std::uint8_t        buf[BUF_SIZE];
-
     std::uint32_t bytes_left;
-    stream.read((char*) &bytes_left, sizeof(bytes_left));
+    stream.read(reinterpret_cast<char*>(&bytes_left), sizeof(bytes_left));
 
-    std::uint32_t buf_pos = BUF_SIZE;
-    for (std::size_t i = 0; i < buffer.size(); ++i)
-    {
+    std::array<std::uint8_t, 4096> buf;
+    std::uint32_t buf_pos = buf.size();
+    for (std::size_t i = 0; i < buffer.size(); ++i) {
         T result = 0;
-        size_t  shift  = 0;
-        do
-        {
-            if (buf_pos == BUF_SIZE)
-            {
-                stream.read(reinterpret_cast<char*>(buf), std::min(bytes_left, BUF_SIZE));
+        std::size_t shift = 0;
+        do {
+            if (buf_pos == buf.size()) {
+                stream.read(reinterpret_cast<char*>(buf.data()), std::min<std::uint32_t>(bytes_left, buf.size()));
                 buf_pos = 0;
             }
 
             std::uint8_t byte = buf[buf_pos++];
-            --bytes_left;
             result |= (byte & 0x7f) << shift;
+            --bytes_left;
             shift += 7;
 
-            if ((byte & 0x80) == 0)
-            {
+            if ((byte & 0x80) == 0) {
                 buffer[i] = (sizeof(T) * 8 <= shift || (byte & 0x40) == 0)
                          ? result
                          : result | ~((1 << shift) - 1);
@@ -56,13 +48,12 @@ void read_leb_128(std::istream& stream, const std::span<T, N> buffer) {
             }
         } while (shift < sizeof(T) * 8);
     }
-
     // assert(bytes_left == 0);
 }
 
 template <std::size_t N>
-class features {
-    using Accumulator = accumulator<N>;
+class basic_features {
+    using Accumulator = basic_accumulator<N>;
 
     constexpr static inline std::size_t L0 = 22528;
     constexpr static inline std::size_t L1 = N;
@@ -71,7 +62,7 @@ class features {
     alignas(64) std::int16_t biases0[L1];
 
 public:
-    features(std::istream& stream) {
+    basic_features(std::istream& stream) {
         const auto biases = std::span{biases0};
         const auto weights = std::span<std::int16_t, L1 * L0>{&weights0[0][0], L1 * L0};
         std::uint32_t header;

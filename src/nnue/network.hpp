@@ -7,7 +7,7 @@
 namespace nnue {
 
 template <std::size_t N>
-class network {
+class basic_network {
     constexpr static inline std::size_t L1 = N;
     constexpr static inline std::size_t L2 = 16;
     constexpr static inline std::size_t L3 = 32;
@@ -22,7 +22,7 @@ class network {
     alignas(64) std::int32_t biases3[1];
 
    public:
-    network(std::istream& stream) {
+    basic_network(std::istream& stream) {
         std::uint32_t header;
         stream.read(reinterpret_cast<char*>(&header), sizeof(header));
 

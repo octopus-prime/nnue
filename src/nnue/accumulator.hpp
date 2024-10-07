@@ -5,7 +5,7 @@
 namespace nnue {
 
 template <std::size_t N>
-struct accumulator {
+struct basic_accumulator {
     alignas(64)  std::int16_t accumulation[2][N];
     bool         computed[2];
 };

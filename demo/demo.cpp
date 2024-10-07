@@ -4,9 +4,9 @@
 using namespace nnue;
 
 class slow_evaluator {
-    using nnue = big_nnue;
+    using NNUE = big_nnue;
 
-    nnue nnue_;
+    NNUE nnue;
 
 public:
     template <int Perspective>
@@ -24,11 +24,11 @@ public:
                 ++count;
             }
 
-        nnue::Accumulator accumulator;
-        nnue_.refresh<WHITE>(accumulator, std::span{white_features}.first(count));
-        nnue_.refresh<BLACK>(accumulator, std::span{black_features}.first(count));
+        NNUE::Accumulator accumulator;
+        nnue.refresh<WHITE>(accumulator, std::span{white_features}.first(count));
+        nnue.refresh<BLACK>(accumulator, std::span{black_features}.first(count));
 
-        return nnue_.evaluate<Perspective>(accumulator, count);
+        return nnue.evaluate<Perspective>(accumulator, count);
     }
 };
 

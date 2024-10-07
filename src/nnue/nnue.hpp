@@ -10,27 +10,28 @@
 namespace nnue {
 
 template <std::size_t N>
-class nnue {
-    using Features = features<N>;
-    using Network = network<N>;
+class basic_nnue {
+    using Header = header;
+    using Features = basic_features<N>;
+    using Network = basic_network<N>;
 
-    std::unique_ptr<header> header_;
-    std::unique_ptr<Features> features_;
-    std::unique_ptr<Network> networks_[8];
+    std::unique_ptr<Header> header;
+    std::unique_ptr<Features> features;
+    std::unique_ptr<Network> networks[8];
 
    public:
-    using Accumulator = accumulator<N>;
+    using Accumulator = basic_accumulator<N>;
 
     constexpr static inline std::size_t L1 = N;
 
-    nnue();
+    basic_nnue();
 
-    nnue(const std::string_view filename) {
+    basic_nnue(const std::string_view filename) {
         std::ifstream stream{filename.data(), std::ios::binary};
 
-        header_ = std::make_unique<header>(stream);
-        features_ = std::make_unique<Features>(stream);
-        std::ranges::generate(networks_, [&]() {
+        header = std::make_unique<Header>(stream);
+        features = std::make_unique<Features>(stream);
+        std::ranges::generate(networks, [&]() {
             return std::make_unique<Network>(stream);
         });
 
@@ -39,25 +40,25 @@ class nnue {
     }
 
     std::uint32_t version() const noexcept {
-        return header_->version;
+        return header->version;
     }
 
     std::uint32_t hash() const noexcept {
-        return header_->hash;
+        return header->hash;
     }
 
     std::string_view description() const noexcept {
-        return header_->description;
+        return header->description;
     }
 
     template <int Perspective>
     void refresh(Accumulator& new_accumulator, const std::span<const std::uint16_t> active_features) const noexcept {
-        features_->refresh(std::span{new_accumulator.accumulation[Perspective]}, active_features);
+        features->refresh(std::span{new_accumulator.accumulation[Perspective]}, active_features);
     }
 
     template <int Perspective>
     void update(Accumulator& new_accumulator, const Accumulator& prev_accumulator, const std::span<const std::uint16_t> removed_features, const std::span<const std::uint16_t> added_features) const noexcept {
-        features_->update(std::span{new_accumulator.accumulation[Perspective]}, std::span{prev_accumulator.accumulation[Perspective]}, removed_features, added_features);
+        features->update(std::span{new_accumulator.accumulation[Perspective]}, std::span{prev_accumulator.accumulation[Perspective]}, removed_features, added_features);
     }
 
     template <int Perspective>
@@ -68,19 +69,19 @@ class nnue {
         mul_clipped_relu(std::span{accumulator.accumulation[Perspective]}, std::span{l1clipped}.template first<L1 / 2>());
         mul_clipped_relu(std::span{accumulator.accumulation[1 - Perspective]}, std::span{l1clipped}.template last<L1 / 2>());
 
-        return networks_[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
+        return networks[bucket]->evaluate(std::span{l1clipped} | std::views::as_const) / 16;
     }
 };
 
 template <>
-nnue<128>::nnue() : nnue{"/home/mike/workspace2/Stockfish/src/nn-37f18f62d772.nnue"} {
+basic_nnue<128>::basic_nnue() : basic_nnue{small_nnue_filename} {
 }
 
 template <>
-nnue<3072>::nnue() : nnue{"/home/mike/workspace2/Stockfish/src/nn-1111cefa1111.nnue"} {
+basic_nnue<3072>::basic_nnue() : basic_nnue{big_nnue_filename} {
 }
 
-using small_nnue = nnue<128>;
-using big_nnue = nnue<3072>;
+using small_nnue = basic_nnue<128>;
+using big_nnue = basic_nnue<3072>;
 
 }  // namespace nnue
