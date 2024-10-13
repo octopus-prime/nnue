@@ -101,7 +101,7 @@ public:
             __m256i regs[chunk];
             std::ranges::copy(biases.subspan(index, chunk), regs);
             for (auto feature : active_features)
-                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, _mm256_add_epi16);
+                std::ranges::transform(regs, weights(feature).subspan(index, chunk), regs, _mm256_add_epi16);
             std::ranges::copy(regs, accumulation.subspan(index, chunk).begin());
         }
     }
@@ -116,9 +116,9 @@ public:
             __m256i regs[chunk];
             std::ranges::copy(previous.subspan(index, chunk), regs);
             for (auto feature : removed_features)
-                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, _mm256_sub_epi16);
+                std::ranges::transform(regs, weights(feature).subspan(index, chunk), regs, _mm256_sub_epi16);
             for (auto feature : added_features)
-                std::ranges::transform(weights(feature).subspan(index, chunk), regs, regs, _mm256_add_epi16);
+                std::ranges::transform(regs, weights(feature).subspan(index, chunk), regs, _mm256_add_epi16);
             std::ranges::copy(regs, accumulation.subspan(index, chunk).begin());
         }
     }

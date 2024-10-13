@@ -4,7 +4,7 @@
 
 namespace nnue {
 
-enum : int {
+enum {
     WHITE,
     BLACK,
     COLOR_NB = 2
@@ -25,20 +25,20 @@ enum : int {
     SQUARE_NB   = 64
 };
 
-enum : int {
+enum {
     NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
     ALL_PIECES = 0,
     PIECE_TYPE_NB = 8
 };
 
-enum : int {
+enum {
     NO_PIECE,
     W_PAWN = PAWN,     W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
     B_PAWN = PAWN + 8, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING,
     PIECE_NB = 16
 };
 
-enum : int {
+enum {
     PS_NONE     = 0,
     PS_W_PAWN   = 0,
     PS_B_PAWN   = 1 * SQUARE_NB,
@@ -54,12 +54,12 @@ enum : int {
     PS_NB       = 11 * SQUARE_NB
 };
 
-constexpr int PieceSquareIndex[2][16] = {
+constexpr std::uint16_t PieceSquareIndex[2][16] = {
     {PS_NONE, PS_W_PAWN, PS_W_KNIGHT, PS_W_BISHOP, PS_W_ROOK, PS_W_QUEEN, PS_KING, PS_NONE, PS_NONE, PS_B_PAWN, PS_B_KNIGHT, PS_B_BISHOP, PS_B_ROOK, PS_B_QUEEN, PS_KING, PS_NONE},
     {PS_NONE, PS_B_PAWN, PS_B_KNIGHT, PS_B_BISHOP, PS_B_ROOK, PS_B_QUEEN, PS_KING, PS_NONE, PS_NONE, PS_W_PAWN, PS_W_KNIGHT, PS_W_BISHOP, PS_W_ROOK, PS_W_QUEEN, PS_KING, PS_NONE}
 };
 
-constexpr int OrientTBL[2][SQUARE_NB] = {
+constexpr std::uint16_t OrientTBL[2][SQUARE_NB] = {
     { SQ_H1, SQ_H1, SQ_H1, SQ_H1, SQ_A1, SQ_A1, SQ_A1, SQ_A1,
     SQ_H1, SQ_H1, SQ_H1, SQ_H1, SQ_A1, SQ_A1, SQ_A1, SQ_A1,
     SQ_H1, SQ_H1, SQ_H1, SQ_H1, SQ_A1, SQ_A1, SQ_A1, SQ_A1,
@@ -79,7 +79,7 @@ constexpr int OrientTBL[2][SQUARE_NB] = {
 };
 
 #define B(v) (v * PS_NB)
-constexpr int KingBuckets[2][SQUARE_NB] = {
+constexpr std::uint16_t KingBuckets[2][SQUARE_NB] = {
     { B(28), B(29), B(30), B(31), B(31), B(30), B(29), B(28),
     B(24), B(25), B(26), B(27), B(27), B(26), B(25), B(24),
     B(20), B(21), B(22), B(23), B(23), B(22), B(21), B(20),
@@ -100,7 +100,7 @@ constexpr int KingBuckets[2][SQUARE_NB] = {
 #undef B
 
 template<int Perspective>
-constexpr std::uint16_t make_index(int king_square, int piece_square, int piece_type) noexcept {
+constexpr std::uint16_t make_index(const std::uint16_t king_square, const std::uint16_t piece_square, const std::uint16_t piece_type) noexcept {
     return (piece_square ^ OrientTBL[Perspective][king_square]) + PieceSquareIndex[Perspective][piece_type] + KingBuckets[Perspective][king_square];
 }
 
