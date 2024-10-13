@@ -86,7 +86,7 @@ void evaluate_nnue() {
         };
 
         const std::int32_t score = evaluate();
-        std::printf("score = %d (%f pawns)\n", score, score / 208.f);
+        std::printf("score = %d (%.2f pawns)\n", score, score / 208.f);
 
         constexpr auto N = 1000000;
         std::vector<std::int32_t> scores(N);
@@ -94,8 +94,8 @@ void evaluate_nnue() {
         std::ranges::generate(scores, evaluate);
         const auto t1 = std::chrono::high_resolution_clock::now();
         const auto t = (t1 - t0) / N;
-        std::printf("score = %d (%f pawns)\n", scores[0], scores[0] / 208.f);
-        std::printf("score = %d (%f pawns)\n", scores[N - 1], scores[N - 1] / 208.f);
+        std::printf("score = %d (%.2f pawns)\n", scores[0], scores[0] / 208.f);
+        std::printf("score = %d (%.2f pawns)\n", scores[N - 1], scores[N - 1] / 208.f);
         std::printf("time = %ldns\n", t.count());
     }
 
@@ -114,7 +114,7 @@ void evaluate_nnue() {
         };
 
         const std::int32_t score = evaluate();
-        std::printf("score = %d (%f pawns)\n", score, score / 208.f);
+        std::printf("score = %d (%.2f pawns)\n", score, score / 208.f);
 
         constexpr auto N = 1000000;
         std::vector<std::int32_t> scores(N);
@@ -122,8 +122,8 @@ void evaluate_nnue() {
         std::ranges::generate(scores, evaluate);
         const auto t1 = std::chrono::high_resolution_clock::now();
         const auto t = (t1 - t0) / N;
-        std::printf("score = %d (%f pawns)\n", scores[0], scores[0] / 208.f);
-        std::printf("score = %d (%f pawns)\n", scores[N - 1], scores[N - 1] / 208.f);
+        std::printf("score = %d (%.2f pawns)\n", scores[0], scores[0] / 208.f);
+        std::printf("score = %d (%.2f pawns)\n", scores[N - 1], scores[N - 1] / 208.f);
         std::printf("time = %ldns\n", t.count());
     }
 }
