@@ -23,7 +23,7 @@ void test_nnue() {
     if (hash != 470819058)
         throw std::runtime_error{"test_nnue (hash) failed"};
     
-    if (!description.ends_with("with the https://github.com/official-stockfish/nnue-pytorch trainer."))
+    if (description != "u0pi21KGe9rz0Ed with the https://github.com/official-stockfish/nnue-pytorch trainer."sv)
         throw std::runtime_error{"test_nnue (description) failed"};
 
     NNUE::Accumulator accumulator[2];
