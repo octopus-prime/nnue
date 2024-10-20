@@ -10,5 +10,6 @@
 - clang 18
 
 #### Reference
+- https://github.com/asdfjkl/neural_network_chess
 - https://github.com/official-stockfish/nnue-pytorch/blob/master/docs/nnue.md
 - https://github.com/official-stockfish/Stockfish
