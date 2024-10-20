@@ -2,6 +2,7 @@
 
 namespace demo {
 
+// just a toy model
 class position {
     const position* previous;
     std::uint8_t board[64];
@@ -22,13 +23,15 @@ class position {
     }
 
 public:
-    position(const position* previous, const std::span<const std::uint8_t, 64> board) : previous{previous}, dirty_pieces_count{0} {
+    position(const std::span<const std::uint8_t, 64> board) : previous{nullptr}, dirty_pieces_count{0} {
         std::ranges::copy(board, this->board);
     }
 
-    position(const position* previous, const std::span<const std::uint8_t, 64> board, const std::span<const dirty_piece> dirty_pieces) : previous{previous}, dirty_pieces_count{dirty_pieces.size()} {
-        std::ranges::copy(board, this->board);
+    position(const position* previous, const std::span<const dirty_piece> dirty_pieces) : previous{previous}, dirty_pieces_count{dirty_pieces.size()} {
+        std::ranges::copy(previous->board, this->board);
         std::ranges::copy(dirty_pieces, this->dirty_pieces);
+        for (const dirty_piece& dirty_piece : dirty_pieces)
+            std::swap(board[dirty_piece.from], board[dirty_piece.to]);
     }
 
     bool has_king_moved() const noexcept {

@@ -31,13 +31,25 @@ class evaluator {
         nnue.update<BLACK>(accumulator, previous, removed_features[BLACK], added_features[BLACK]);
     }
 
+    void prepare(const position& position) const noexcept {
+        auto& accumulator = position.get_accumulator();
+        if (accumulator.computed)
+            return;
+
+        if (!position.has_previous() || position.has_king_moved()) {
+            refresh(position);
+        } else {
+            prepare(position.get_previous());
+            update(position);
+        }
+
+        accumulator.computed = true;
+    }
+
 public:
     template <int Perspective>
     std::int32_t evaluate(const position& position) const noexcept {
-        if (position.has_previous() && !position.has_king_moved())
-            update(position);
-        else
-            refresh(position);
+        prepare(position);
         return nnue.evaluate<Perspective>(position.get_accumulator(), position.count_pieces());
     }
 };
